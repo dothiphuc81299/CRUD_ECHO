@@ -29,6 +29,7 @@ type CreateModelSuite struct {
 var idGet = primitive.NewObjectID()
 var idDelete = primitive.NewObjectID()
 var idUpdate = primitive.NewObjectID()
+var idCompleted = primitive.NewObjectID()
 
 //SetupSuite to.....
 func (s CreateModelSuite) SetupSuite() {
@@ -37,6 +38,7 @@ func (s CreateModelSuite) SetupSuite() {
 	addRecord(idGet)
 	addRecord(idDelete)
 	addRecord(idUpdate)
+	addRecord(idCompleted)
 
 }
 
@@ -129,6 +131,31 @@ func (s *CreateModelSuite) TestUpdateModel() {
 	assert.Equal(s.T(), x.UpsertedID, "")
 
 }
+
+func (s *CreateModelSuite) TestCompletedModel() {
+	e := echo.New()
+	req, _ := http.NewRequest(http.MethodPut, "/todos/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(idCompleted.Hex())
+	controllers.CompletedModel(c)
+	assert.Equal(s.T(), http.StatusOK, rec.Code)
+	x := struct {
+		MatchedCount  int    `bson:"MatchedCount" json:"MatchedCount"`
+		ModifiedCount int    `bson:"ModifiedCount" json:"ModifiedCount"`
+		UpsertedCount int    `bson:"UpsertedCount" json:"UpsertedCount"`
+		UpsertedID    string `bson:"UpsertedID" json:"UpsertedID"`
+	}{}
+	json.Unmarshal([]byte(rec.Body.String()), &x)
+	assert.Equal(s.T(), x.MatchedCount, 1)
+	assert.Equal(s.T(), x.ModifiedCount, 1)
+	assert.Equal(s.T(), x.UpsertedCount, 0)
+	assert.Equal(s.T(), x.UpsertedID, "")
+
+}
+
+
 func (s *CreateModelSuite) TestGetModelByID() {
 	e := echo.New()
 	req, _ := http.NewRequest(http.MethodPut, "/todos/", nil)

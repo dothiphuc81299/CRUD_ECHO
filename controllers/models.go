@@ -88,6 +88,30 @@ func UpdateModel(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+//CompletedModel to ...
+func CompletedModel(c echo.Context) error {
+	collection := database.DB.Collection("todos")
+	model := new(models.Model)
+	if err := c.Bind(model); err != nil {
+		log.Println(err)
+	}
+	id := c.Param("id")
+	objectID, _ := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{
+		"completed": true,
+	}}
+	result, err := collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// } else {
+	// 	fmt.Println("UpdateOne()", result)
+	// }
+	return c.JSON(http.StatusOK, result)
+
+}
+
 //GetModelByID to...
 func GetModelByID(c echo.Context) error {
 	collection := database.DB.Collection("todos")
